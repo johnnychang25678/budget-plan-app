@@ -1,32 +1,20 @@
 package main
 
 import (
-	"budget-plan-app/backend/db"
-	"context"
-	"fmt"
+	"budget-plan-app/backend/routers"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	// server := gin.Default()
-	// pgxConfig := pgx.ConnConfig{
-	// 	Host:     "localhost",
-	// 	Database: "budget_plan_app",
-	// }
+	server := gin.Default()
 
-	conn := db.ConnectDB()
+	server.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, "hello")
+	})
 
-	defer conn.Close(context.Background())
-	var id int
-	var email string
+	routers.Routes(server)
 
-	conn.QueryRow(context.Background(), "select id, email from member where id = $1", 1).Scan(&id, &email)
-	fmt.Println(id, email)
-
-	// server.GET("/", func(c *gin.Context) {
-	// 	c.JSON(http.StatusOK, "hello")
-	// })
-
-	// routers.Routes(server)
-
-	// server.Run(":8080")
+	server.Run(":8080")
 }
