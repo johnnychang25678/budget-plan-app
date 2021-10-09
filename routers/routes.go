@@ -21,6 +21,7 @@ func Routes(server *gin.Engine) {
 	{
 		spaceRoutes.GET("/:memberId", spaceController.FindSpaces)
 		spaceRoutes.POST("/", spaceController.CreateSpace)
+		spaceRoutes.POST("/share", spaceController.ShareSpace)
 	}
 	planRoutes := server.Group("/plans")
 	{

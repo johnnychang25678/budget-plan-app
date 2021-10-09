@@ -21,7 +21,7 @@ func NewSpaceRepo() *SpaceRepo {
 	}
 }
 
-func (s *SpaceRepo) Create(memberId int, isOwner bool) error {
+func (s *SpaceRepo) Create(memberId int, spaceTitle string, isOwner bool) error {
 	conn := s.conn
 	cb := s.contextBackground
 
@@ -33,7 +33,7 @@ func (s *SpaceRepo) Create(memberId int, isOwner bool) error {
 	defer conn.Close(cb)
 	// this transaction will insert into space and space_memeber
 
-	_, err = tx.Exec(cb, "INSERT INTO space (member_id) VALUES ($1);", memberId)
+	_, err = tx.Exec(cb, "INSERT INTO space (member_id, space_title) VALUES ($1, $2);", memberId, spaceTitle)
 	if err != nil {
 		fmt.Println("first tx err: ", err)
 		return err
@@ -52,10 +52,12 @@ func (s *SpaceRepo) Create(memberId int, isOwner bool) error {
 	return nil
 }
 
+// find all spaces, include the ones you own and the ones you are shared with
 func (s *SpaceRepo) FindAll(memberId int) ([]int, error) {
 	conn := s.conn
 	cb := s.contextBackground
 
+	// TODO: add index on member_id on space_member table
 	// TODO: use JOIN to select repayment_plan data to show to users
 	rows, err := conn.Query(cb, "SELECT space_id FROM space_member WHERE member_id = $1", memberId)
 	if err != nil {
@@ -63,6 +65,7 @@ func (s *SpaceRepo) FindAll(memberId int) ([]int, error) {
 	}
 
 	defer rows.Close()
+	// defer conn.Close(cb)
 	var spaces []int
 	// equavilant to while rows.Next() == true {...}
 	for rows.Next() {
@@ -74,4 +77,53 @@ func (s *SpaceRepo) FindAll(memberId int) ([]int, error) {
 		spaces = append(spaces, spaceId)
 	}
 	return spaces, nil
+}
+
+// find the spaces you owned
+func (s *SpaceRepo) FindOwnedSpaces(memberId int) ([]int, error) {
+	conn := s.conn
+	cb := s.contextBackground
+
+	rows, err := conn.Query(cb, "SELECT id FROM space WHERE member_id = $1", memberId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	// defer conn.Close(cb)
+	var spaces []int
+
+	for rows.Next() {
+		var spaceId int
+		err := rows.Scan(&spaceId)
+		if err != nil {
+			return nil, err
+		}
+		spaces = append(spaces, spaceId)
+	}
+
+	return spaces, nil
+}
+
+type SpaceMemberInputModel struct {
+	SpaceId  int
+	MemberId int
+	IsOwner  bool
+}
+
+func (s *SpaceRepo) AddToSpaceMember(spaceMemberInput SpaceMemberInputModel) error {
+	conn := s.conn
+	cb := s.contextBackground
+
+	_, err := conn.Exec(
+		cb,
+		"INSERT INTO space_member (space_id, member_id, is_owner) VALUES ($1, $2, $3)",
+		spaceMemberInput.SpaceId,
+		spaceMemberInput.MemberId,
+		spaceMemberInput.IsOwner,
+	)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	return nil
 }
