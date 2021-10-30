@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	memberController controllers.MemberController = *controllers.NewMemberController()
-	spaceController  controllers.SpaceController  = *controllers.NewSpaceController()
+	memberController         controllers.MemberController        = *controllers.NewMemberController()
+	spaceController          controllers.SpaceController         = *controllers.NewSpaceController()
+	repamymentPlanController controllers.RepaymentPlanController = *controllers.NewRepaymentPlanController()
 )
 
 func Routes(server *gin.Engine) {
@@ -23,10 +24,10 @@ func Routes(server *gin.Engine) {
 		spaceRoutes.POST("/", spaceController.CreateSpace)
 		spaceRoutes.POST("/share", spaceController.ShareSpace)
 	}
-	planRoutes := server.Group("/plans")
+	planRoutes := server.Group("/repayment-plans")
 	{
-		planRoutes.GET("/", getPlans)
-		planRoutes.GET("/:planId", getPlan)
+		planRoutes.POST("/", repamymentPlanController.CreateRepaymentPlan)
+		planRoutes.GET("/:spaceId", repamymentPlanController.GetRepaymentPlans)
 	}
 	budgetRoutes := server.Group("/budgets")
 	{

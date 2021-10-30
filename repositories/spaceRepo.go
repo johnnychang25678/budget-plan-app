@@ -127,3 +127,5 @@ func (s *SpaceRepo) AddToSpaceMember(spaceMemberInput SpaceMemberInputModel) err
 	}
 	return nil
 }
+
+// TODO: add find space detail by Id
