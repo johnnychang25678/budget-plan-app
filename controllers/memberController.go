@@ -29,7 +29,7 @@ func (m *MemberController) CreateMember(c *gin.Context) {
 		})
 		return
 	}
-	err = m.repo.Create(member)
+	err = m.repo.Create(member.Email)
 	if err != nil {
 		fmt.Println("member repo create error. email: ", member.Email)
 		c.JSON(500, gin.H{

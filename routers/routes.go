@@ -7,16 +7,41 @@ import (
 )
 
 var (
-	memberController         controllers.MemberController        = *controllers.NewMemberController()
-	spaceController          controllers.SpaceController         = *controllers.NewSpaceController()
-	repamymentPlanController controllers.RepaymentPlanController = *controllers.NewRepaymentPlanController()
+	memberController         controllers.MemberController
+	spaceController          controllers.SpaceController
+	repamymentPlanController controllers.RepaymentPlanController
+	authController           controllers.AuthController
 )
 
+func initControllers() {
+	memberController = *controllers.NewMemberController()
+	spaceController = *controllers.NewSpaceController()
+	repamymentPlanController = *controllers.NewRepaymentPlanController()
+	authController = *controllers.NewAuthController()
+}
+
 func Routes(server *gin.Engine) {
+	initControllers()
+	authRoutes := server.Group("/auth")
+	{
+		authRoutes.GET("/", authController.HandleAuth)
+		authRoutes.GET("/callback", authController.HandleCallback)
+	}
+
 	memberRoutes := server.Group("/member")
 	{
 		memberRoutes.POST("/signup", memberController.CreateMember)
 	}
+
+	// testRoutes := server.Group("/test")
+	// {
+	// 	testRoutes.Use(middlewares.Auth())
+	// 	testRoutes.GET("/", func(c *gin.Context) {
+	// 		c.JSON(200, gin.H{
+	// 			"status": "You're in!",
+	// 		})
+	// 	})
+	// }
 
 	spaceRoutes := server.Group("/spaces")
 	{

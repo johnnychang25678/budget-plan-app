@@ -7,15 +7,9 @@ import (
 	"os"
 
 	"github.com/jackc/pgx/v4"
-	"github.com/joho/godotenv"
 )
 
 func ConnectDB() *pgx.Conn {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
 	connString := fmt.Sprintf(
 		"user=%s host=%s password=%s port=%s dbname=%s",
 		os.Getenv("DB_USER"),
@@ -30,6 +24,6 @@ func ConnectDB() *pgx.Conn {
 		fmt.Println(err)
 		log.Fatal("Unable to connect to datatbase")
 	}
-
+	fmt.Println("Connected to DB!")
 	return conn
 }
