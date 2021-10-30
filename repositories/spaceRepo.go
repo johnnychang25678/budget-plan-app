@@ -4,25 +4,20 @@ import (
 	"budget-plan-app/backend/db"
 	"context"
 	"fmt"
-
-	"github.com/jackc/pgx/v4"
 )
 
 type SpaceRepo struct {
-	conn              *pgx.Conn
 	contextBackground context.Context
 }
 
 func NewSpaceRepo() *SpaceRepo {
-	dbConn := db.ConnectDB()
 	return &SpaceRepo{
-		conn:              dbConn,
 		contextBackground: context.Background(),
 	}
 }
 
 func (s *SpaceRepo) Create(memberId int, spaceTitle string, isOwner bool) error {
-	conn := s.conn
+	conn := db.ConnectDB()
 	cb := s.contextBackground
 
 	tx, err := conn.Begin(cb)
@@ -54,7 +49,7 @@ func (s *SpaceRepo) Create(memberId int, spaceTitle string, isOwner bool) error 
 
 // find all spaces, include the ones you own and the ones you are shared with
 func (s *SpaceRepo) FindAll(memberId int) ([]int, error) {
-	conn := s.conn
+	conn := db.ConnectDB()
 	cb := s.contextBackground
 
 	// TODO: add index on member_id on space_member table
@@ -81,7 +76,7 @@ func (s *SpaceRepo) FindAll(memberId int) ([]int, error) {
 
 // find the spaces you owned
 func (s *SpaceRepo) FindOwnedSpaces(memberId int) ([]int, error) {
-	conn := s.conn
+	conn := db.ConnectDB()
 	cb := s.contextBackground
 
 	rows, err := conn.Query(cb, "SELECT id FROM space WHERE member_id = $1", memberId)
@@ -111,7 +106,7 @@ type SpaceMemberInputModel struct {
 }
 
 func (s *SpaceRepo) AddToSpaceMember(spaceMemberInput SpaceMemberInputModel) error {
-	conn := s.conn
+	conn := db.ConnectDB()
 	cb := s.contextBackground
 
 	_, err := conn.Exec(

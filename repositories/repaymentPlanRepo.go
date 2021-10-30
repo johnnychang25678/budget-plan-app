@@ -5,25 +5,22 @@ import (
 	"budget-plan-app/backend/models"
 	"context"
 	"fmt"
-
-	"github.com/jackc/pgx/v4"
 )
 
 type RepaymentPlanRepo struct {
-	conn              *pgx.Conn
+	// conn              *pgx.Conn
 	contextBackground context.Context
 }
 
 func NewRepaymentRepo() *RepaymentPlanRepo {
-	conn := db.ConnectDB()
 	return &RepaymentPlanRepo{
-		conn:              conn,
+
 		contextBackground: context.Background(),
 	}
 }
 
 func (r *RepaymentPlanRepo) Create(repamymentPlan models.RepaymentPlan) error {
-	conn := r.conn
+	conn := db.ConnectDB()
 	cb := r.contextBackground
 
 	defer conn.Close(cb)
@@ -45,7 +42,7 @@ func (r *RepaymentPlanRepo) Create(repamymentPlan models.RepaymentPlan) error {
 
 // return repaymentPlanId
 func (r *RepaymentPlanRepo) GetPlansById(planId int) ([]models.RepaymentPlan, error) {
-	conn := r.conn
+	conn := db.ConnectDB()
 	cb := r.contextBackground
 
 	rows, err := conn.Query(cb, "SELECT space_id, title, total_cost, due_date FROM repayment_plan WHERE id = $1", planId)
