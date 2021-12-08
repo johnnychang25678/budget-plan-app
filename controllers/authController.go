@@ -3,6 +3,7 @@ package controllers
 import (
 	"budget-plan-app/backend/consts"
 	"budget-plan-app/backend/repositories"
+	"budget-plan-app/backend/utils"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
 )
 
 type AuthController struct {
@@ -84,20 +84,31 @@ func (a *AuthController) HandleCallback(c *gin.Context) {
 		return
 	}
 	fmt.Println("userId:", userId)
+
 	if userId == 0 {
-		fmt.Println("Should call create")
 		memberRepo.Create(email)
 	}
-	jwtToken, err := genJwtToken(userId)
-	if err != nil {
+
+	accessTokenChan := make(chan utils.TokenResult)
+	refreshTokenChan := make(chan utils.TokenResult)
+	go utils.GenJwtToken(userId, utils.AccessToken, accessTokenChan)
+	go utils.GenJwtToken(userId, utils.RefreshToken, refreshTokenChan)
+	at, rt := <-accessTokenChan, <-refreshTokenChan
+
+	if at.Err != nil || rt.Err != nil {
 		fmt.Println("gen jwt token error")
 		c.JSON(500, gin.H{
-			"error": err.Error(),
+			"error": gin.H{
+				"accessTokenErr":  at.Err.Error(),
+				"refreshTokenErr": rt.Err.Error(),
+			},
 		})
 		return
 	}
+
 	c.JSON(200, gin.H{
-		"access_token": jwtToken,
+		"access_token":  at.Token,
+		"refresh_token": rt.Token,
 	})
 }
 
@@ -182,23 +193,4 @@ func (a *AuthController) getUserEmail(accessToken string) (string, error) {
 	var resp respBody
 	json.Unmarshal(body, &resp)
 	return resp.Email, nil
-}
-
-func genJwtToken(userId int) (string, error) {
-	jwtKey := os.Getenv("JWT_KEY")
-	type customClaims struct {
-		userId string
-		jwt.StandardClaims
-	}
-	claims := customClaims{
-		userId: fmt.Sprint(userId),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, err := token.SignedString([]byte(jwtKey))
-	fmt.Println("signed token:", signedToken)
-	if err != nil {
-		return "", err
-	}
-	return signedToken, nil
 }
